@@ -36,6 +36,7 @@ export default function Home() {
   const [progress, setProgress] = useState<Progress>({});
   const [showCompleted, setShowCompleted] = useState(true);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [successAnimation, setSuccessAnimation] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
   
   // Load progress from localStorage on initial load
@@ -56,27 +57,27 @@ export default function Home() {
   }, [progress]);
   
   const disciplines: Discipline[] = [
-    { id: 'reading', name: 'Read Exodus reading & reflection', icon: <BookOpen />, frequency: 'daily' },
-    { id: 'holyHour', name: 'Make a Holy Hour', icon: <Hourglass />, frequency: 'daily' },
-    { id: 'morningOffering', name: 'Morning Offering', icon: <Sun />, frequency: 'daily' },
-    { id: 'nightlyExamen', name: 'Nightly Examen', icon: <Moon />, frequency: 'daily' },
-    { id: 'sleep', name: 'Full night\'s sleep (8hrs)', icon: <BedDouble />, frequency: 'daily' },
-    { id: 'coldShower', name: 'Take Cold Showers', icon: <Droplets />, frequency: 'daily' },
-    { id: 'smartphone', name: 'Avoid unnecessary smartphone use', icon: <Smartphone />, frequency: 'daily' },
-    { id: 'computer', name: 'Avoid unnecessary computer use', icon: <Laptop />, frequency: 'daily' },
-    { id: 'games', name: 'Give up video games', icon: <Gamepad2 />, frequency: 'daily' },
-    { id: 'tv', name: 'Give up TV', icon: <Tv />, frequency: 'daily' },
-    { id: 'alcohol', name: 'Give up alcohol', icon: <Wine />, frequency: 'daily' },
-    { id: 'sodas', name: 'No soda or sweet drinks', icon: <Coffee />, frequency: 'daily' },
-    { id: 'snacks', name: 'No snacking between meals', icon: <Cookie />, frequency: 'daily' },
-    { id: 'sweets', name: 'No desserts or sweets', icon: <Candy />, frequency: 'daily' },
-    { id: 'music', name: 'Listen only to music that lifts the soul to God', icon: <Music />, frequency: 'daily' },
-    { id: 'purchases', name: 'No unnecessary purchases', icon: <ShoppingBag />, frequency: 'daily' },
-    { id: 'anchor', name: 'Check in with your anchor', icon: <Users />, frequency: 'daily' },
-    { id: 'exercise', name: 'Physical exercise', icon: <Dumbbell />, frequency: 'weekday', days: ['Monday', 'Wednesday', 'Friday'] },
-    { id: 'fraternity', name: 'Weekly fraternity meeting', icon: <Fraternity />, frequency: 'weekly', days: ['Wednesday'] },
-    { id: 'fast', name: 'Fast', icon: <Utensils />, frequency: 'weekly', days: ['Wednesday', 'Friday'] },
-    { id: 'sunday', name: 'Celebrate the Lord\'s day', icon: <Church />, frequency: 'weekly', days: ['Sunday'] }
+    { id: 'reading', name: 'Czytaj fragment Księgi Wyjścia i refleksję', icon: <BookOpen />, frequency: 'daily' },
+    { id: 'holyHour', name: 'Spędź Świętą Godzinę', icon: <Hourglass />, frequency: 'daily' },
+    { id: 'morningOffering', name: 'Poranny akt zawierzenia', icon: <Sun />, frequency: 'daily' },
+    { id: 'nightlyExamen', name: 'Wieczorny rachunek sumienia', icon: <Moon />, frequency: 'daily' },
+    { id: 'sleep', name: 'Pełny sen (8 godz.)', icon: <BedDouble />, frequency: 'daily' },
+    { id: 'coldShower', name: 'Zimny prysznic', icon: <Droplets />, frequency: 'daily' },
+    { id: 'smartphone', name: 'Unikaj zbędnego używania smartfona', icon: <Smartphone />, frequency: 'daily' },
+    { id: 'computer', name: 'Unikaj zbędnego używania komputera', icon: <Laptop />, frequency: 'daily' },
+    { id: 'games', name: 'Rezygnacja z gier wideo', icon: <Gamepad2 />, frequency: 'daily' },
+    { id: 'tv', name: 'Rezygnacja z telewizji', icon: <Tv />, frequency: 'daily' },
+    { id: 'alcohol', name: 'Rezygnacja z alkoholu', icon: <Wine />, frequency: 'daily' },
+    { id: 'sodas', name: 'Bez napojów gazowanych i słodkich', icon: <Coffee />, frequency: 'daily' },
+    { id: 'snacks', name: 'Bez przekąsek między posiłkami', icon: <Cookie />, frequency: 'daily' },
+    { id: 'sweets', name: 'Bez słodyczy i deserów', icon: <Candy />, frequency: 'daily' },
+    { id: 'music', name: 'Słuchaj tylko muzyki wznoszącej duszę do Boga', icon: <Music />, frequency: 'daily' },
+    { id: 'purchases', name: 'Bez niepotrzebnych zakupów', icon: <ShoppingBag />, frequency: 'daily' },
+    { id: 'anchor', name: 'Kontakt z bratem kotwicą', icon: <Users />, frequency: 'daily' },
+    { id: 'exercise', name: 'Ćwiczenia fizyczne', icon: <Dumbbell />, frequency: 'weekday', days: ['Monday', 'Wednesday', 'Friday'] },
+    { id: 'fraternity', name: 'Spotkanie grupy', icon: <Fraternity />, frequency: 'weekly', days: ['Wednesday'] },
+    { id: 'fast', name: 'Post', icon: <Utensils />, frequency: 'weekly', days: ['Wednesday', 'Friday'] },
+    { id: 'sunday', name: 'Świętuj Dzień Pański', icon: <Church />, frequency: 'weekly', days: ['Sunday'] }
   ];
 
   const formatDate = (date: Date): string => {
@@ -84,11 +85,25 @@ export default function Home() {
   };
   
   const getDateString = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+    // Convert to Polish date format
+    return date.toLocaleDateString('pl-PL', options);
   };
   
   const isDisciplineForDate = (discipline: Discipline, date: Date): boolean => {
-    const day = date.toLocaleDateString('en-US', { weekday: 'long' });
+    // Map Polish weekday names to English for comparison
+    const dayMapping: Record<string, string> = {
+      'poniedziałek': 'Monday',
+      'wtorek': 'Tuesday',
+      'środa': 'Wednesday',
+      'czwartek': 'Thursday',
+      'piątek': 'Friday',
+      'sobota': 'Saturday',
+      'niedziela': 'Sunday'
+    };
+    
+    const plDay = date.toLocaleDateString('pl-PL', { weekday: 'long' });
+    const day = dayMapping[plDay.toLowerCase()] || plDay;
     
     if (discipline.frequency === 'daily') return true;
     if (discipline.frequency === 'weekly' && discipline.days?.includes(day)) return true;
@@ -110,6 +125,9 @@ export default function Home() {
   
   const handleDisciplineUpdate = (disciplineId: string, status: 'completed' | 'failed' | 'skipped') => {
     const dateStr = formatDate(selectedDate);
+    // Get previous status to check if it's a new completion
+    const previousStatus = progress[dateStr]?.[disciplineId];
+    
     // Create updated progress object
     const updatedProgress = {
       ...progress,
@@ -124,6 +142,13 @@ export default function Home() {
     
     // Save to localStorage immediately
     localStorage.setItem('exodusProgress', JSON.stringify(updatedProgress));
+    
+    // Trigger success animation if completing something new
+    if (status === 'completed' && previousStatus !== 'completed') {
+      setSuccessAnimation(disciplineId);
+      // Clear animation after it plays
+      setTimeout(() => setSuccessAnimation(null), 1500);
+    }
   };
   
   const getDisciplineStatus = (disciplineId: string): 'completed' | 'failed' | 'skipped' | null => {
@@ -164,11 +189,6 @@ export default function Home() {
     }
   };
   
-  // Swipe gesture handlers
-  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
   const handleTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
     if (touchStartX.current === null) return;
     
@@ -225,8 +245,10 @@ export default function Home() {
     touchStartX.current = null;
   };
   
-  
-  
+  // Swipe gesture handlers
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
   
   const isSelectedDateToday = (): boolean => {
     const today = formatDate(currentDate);
@@ -292,30 +314,80 @@ export default function Home() {
   // Button animations
   const buttonTap = { scale: 0.95 };
   
+  // Success animation variants
+  const successVariants = {
+    initial: { scale: 0, opacity: 0 },
+    animate: { 
+      scale: [0, 1.2, 1],
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        ease: "easeOut" 
+      }
+    },
+    exit: { 
+      scale: [1, 1.2, 0],
+      opacity: [1, 1, 0],
+      transition: { 
+        duration: 0.3,
+        ease: "easeIn" 
+      }
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-24 overflow-hidden">
-      {/* Header */}
+      {/* Success Animation Overlay */}
+      <AnimatePresence>
+        {successAnimation && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-green-500 text-white p-8 rounded-full flex flex-col items-center"
+              variants={successVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <CheckCircle size={60} />
+              <motion.p 
+                className="mt-4 text-xl font-bold"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0, transition: { delay: 0.2 } }}
+              >
+                Brawo!
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modern Header */}
       <motion.header 
-        className="bg-purple-900 text-white p-4 shadow-md"
+        className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 text-white py-6 shadow-lg"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       >
         <motion.h1 
-          className="text-2xl font-bold text-center"
+          className="text-3xl font-bold text-center tracking-wider"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          Exodus
+          EXODUS
         </motion.h1>
         <motion.p 
-          className="text-center text-purple-200"
+          className="text-center text-purple-200 text-sm opacity-80 mt-1"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          Lenten Journey 2025
+          Wielki Post 2025
         </motion.p>
       </motion.header>
       
@@ -324,12 +396,12 @@ export default function Home() {
         {isLentActive() ? (
           <>
             <div className="flex justify-between text-sm mb-1">
-              <span>Ash Wednesday</span>
-              <span>Easter Sunday</span>
+              <span>Środa Popielcowa</span>
+              <span>Niedziela Wielkanocna</span>
             </div>
             <div className="w-full bg-gray-300 rounded-full h-4 mb-1 overflow-hidden">
               <motion.div 
-                className="bg-purple-600 h-4 rounded-full"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 h-4 rounded-full"
                 variants={progressBarVariants}
                 initial="initial"
                 animate="animate"
@@ -341,18 +413,18 @@ export default function Home() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
-              Day {getDaysElapsed()} of {TOTAL_DAYS} ({getProgress()}% complete)
+              Dzień {getDaysElapsed()} z {TOTAL_DAYS} ({getProgress()}% ukończone)
             </motion.p>
           </>
         ) : (
           <motion.div 
-            className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4"
+            className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 rounded-r"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
           >
-            <p className="font-semibold">Lent 2025 begins on {ASH_WEDNESDAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-            <p>{getDaysUntilLent()} days until Lent begins</p>
+            <p className="font-semibold">Wielki Post 2025 zaczyna się {ASH_WEDNESDAY.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p>{getDaysUntilLent()} dni do rozpoczęcia Wielkiego Postu</p>
           </motion.div>
         )}
       </div>
@@ -366,8 +438,8 @@ export default function Home() {
         <div className="flex items-center justify-center mb-2">
           <motion.button 
             onClick={goToPreviousDay}
-            className="mr-2 p-2 rounded-full bg-purple-100 text-purple-800" 
-            aria-label="Previous day"
+            className="mr-2 p-3 rounded-full bg-purple-100 text-purple-800 shadow-sm" 
+            aria-label="Poprzedni dzień"
             disabled={selectedDate <= ASH_WEDNESDAY}
             whileTap={buttonTap}
             whileHover={{ scale: 1.1 }}
@@ -388,12 +460,12 @@ export default function Home() {
               {getDateString(selectedDate)}
               {isSelectedDateToday() && (
                 <motion.span 
-                  className="ml-2 text-sm bg-green-500 text-white px-2 py-0.5 rounded-full inline-block"
+                  className="ml-2 text-sm bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-0.5 rounded-full inline-block shadow-sm"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500 }}
                 >
-                  Today
+                  Dziś
                 </motion.span>
               )}
             </motion.h2>
@@ -401,8 +473,8 @@ export default function Home() {
           
           <motion.button 
             onClick={goToNextDay}
-            className="ml-2 p-2 rounded-full bg-purple-100 text-purple-800" 
-            aria-label="Next day"
+            className="ml-2 p-3 rounded-full bg-purple-100 text-purple-800 shadow-sm" 
+            aria-label="Następny dzień"
             disabled={selectedDate >= currentDate}
             whileTap={buttonTap}
             whileHover={{ scale: 1.1 }}
@@ -417,7 +489,7 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
         >
-          Swipe left/right to navigate between days
+          Przesuń w lewo/prawo, aby zmienić dzień
         </motion.p>
       </div>
       
@@ -425,14 +497,14 @@ export default function Home() {
       <div className="px-4 mb-4 flex justify-center">
         <motion.button 
           onClick={() => setShowCompleted(!showCompleted)} 
-          className="text-sm bg-purple-100 text-purple-800 px-4 py-2 rounded-full"
+          className="text-sm bg-purple-100 text-purple-800 px-5 py-2 rounded-full shadow-sm"
           whileHover={{ scale: 1.05 }}
           whileTap={buttonTap}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          {showCompleted ? "Hide Completed" : "Show All"}
+          {showCompleted ? "Ukryj ukończone" : "Pokaż wszystkie"}
         </motion.button>
       </div>
       
@@ -453,7 +525,7 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <p>Lent hasnt started yet for this date.</p>
+                <p>Wielki Post jeszcze się nie rozpoczął dla tej daty.</p>
               </motion.div>
             ) : selectedDate > EASTER_SUNDAY ? (
               <motion.div 
@@ -461,7 +533,7 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <p>Lent is complete for this date.</p>
+                <p>Wielki Post został zakończony dla tej daty.</p>
               </motion.div>
             ) : (
               <motion.ul className="space-y-3">
@@ -483,6 +555,14 @@ export default function Home() {
                         initial="hidden"
                         animate="visible"
                         whileHover={{ y: -2, boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
+                        // animate={
+                        //   successAnimation === discipline.id 
+                        //     ? [
+                        //         "visible", 
+                        //         { scale: [1, 1.05, 1], backgroundColor: ["#ffffff", "#d1fae5", "#d1fae5"] }
+                        //       ]
+                        //     : "visible"
+                        // }
                       >
                         <div className="flex items-center space-x-3">
                           <motion.div 
@@ -501,7 +581,7 @@ export default function Home() {
                           <motion.button 
                             onClick={() => handleDisciplineUpdate(discipline.id, 'completed')}
                             className={`p-2 rounded-full ${status === 'completed' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}
-                            aria-label="Mark as completed"
+                            aria-label="Oznacz jako wykonane"
                             disabled={selectedDate > currentDate}
                             whileTap={buttonTap}
                             whileHover={{ scale: 1.1 }}
@@ -511,7 +591,7 @@ export default function Home() {
                           <motion.button 
                             onClick={() => handleDisciplineUpdate(discipline.id, 'failed')}
                             className={`p-2 rounded-full ${status === 'failed' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'}`}
-                            aria-label="Mark as failed"
+                            aria-label="Oznacz jako niewykonane"
                             disabled={selectedDate > currentDate}
                             whileTap={buttonTap}
                             whileHover={{ scale: 1.1 }}
@@ -529,17 +609,48 @@ export default function Home() {
              disciplines.filter(discipline => isDisciplineForDate(discipline, selectedDate))
                        .filter(discipline => showCompleted || getDisciplineStatus(discipline.id) !== 'completed').length === 0 && (
               <motion.div 
-                className="text-center py-8 text-gray-500"
+                className="text-center py-12 text-gray-700"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 500 }}
               >
-                <p>All disciplines completed for this day! 🎉</p>
+                <motion.div 
+                  className="text-green-500 mb-4 inline-block"
+                  animate={{ 
+                    rotate: [0, 10, -10, 10, 0],
+                    scale: [1, 1.2, 1.2, 1.2, 1] 
+                  }}
+                  transition={{ duration: 1.5, ease: "easeInOut", times: [0, 0.2, 0.5, 0.8, 1] }}
+                >
+                  <CheckCircle size={60} />
+                </motion.div>
+                <p className="text-xl font-semibold">Wszystkie zadania na dziś ukończone! 🎉</p>
               </motion.div>
             )}
           </motion.div>
         </AnimatePresence>
       </div>
+      
+      {/* CSS for bounce animations */}
+      <style jsx global>{`
+        @keyframes bounce-right {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(10px); }
+        }
+
+        @keyframes bounce-left {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-10px); }
+        }
+
+        .bounce-right {
+          animation: bounce-right 0.3s ease-in-out;
+        }
+
+        .bounce-left {
+          animation: bounce-left 0.3s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }
